@@ -1,7 +1,9 @@
 import pandas as pd
+from sqlalchemy import create_engine
+
 
 #Load the data
-df = pd.read_csv('datasource/data_sample_one.csv', header=None)
+df = pd.read_csv('datasource/Data.csv', header=None)
 
 # Define a list of column names
 df.columns = ["MC", "Date", "downtime_start", "downtime_finish", "downtime_total", "remove_one", "remove_two", "remove_three", "downtime_reason", "machine_state", "shift_code", "part_number", "part_description", "user_id"]  # Replace with appropriate names
@@ -33,13 +35,27 @@ df.loc[df['downtime_finish'] < df['downtime_start'], 'downtime_finish'] += pd.Ti
 # Calculate downtime total as a timedelta
 df['downtime_total'] = df['downtime_finish'] - df['downtime_start']
 
-# Convert to minutes
-df['downtime_total_minutes'] = df['downtime_total'].dt.total_seconds() / 60
+# Convert downtime_total to minutes as a new column (or replace downtime_total if you prefer)
+df['downtime_total_minutes'] = df['downtime_total'].dt.total_seconds() / 60  # for minutes
+
+# Drop the original downtime_total column if no longer needed
+df.drop(columns=['downtime_total'], inplace=True)
+
 
 # Set Pandas to show all columns
 pd.set_option('display.max_columns', None)
 
-# Display the first 6 rows
-print(df.head(7))
+###########################################
+#
+#   Save to Database
+#
+###########################################
 
+# Define the database connection URL for PostgreSQL
+engine = create_engine('postgresql://postgres:1T1I1m1e@localhost/downtime_data')
+
+# Assuming df is your cleaned DataFrame, store it in PostgreSQL
+df.to_sql('downtime', con=engine, if_exists='replace', index=False)
+
+print("Data successfully stored in PostgreSQL.")
 
