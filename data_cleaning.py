@@ -6,7 +6,7 @@ from sqlalchemy import create_engine
 df = pd.read_csv('datasource/Data.csv', header=None)
 
 # Define a list of column names
-df.columns = ["MC", "Date", "downtime_start", "downtime_finish", "downtime_total", "remove_one", "remove_two", "remove_three", "downtime_reason", "machine_state", "shift_code", "part_number", "part_description", "user_id"]  # Replace with appropriate names
+df.columns = ["mc", "date", "downtime_start", "downtime_finish", "downtime_total", "remove_one", "remove_two", "remove_three", "downtime_reason", "machine_state", "shift_code", "part_number", "part_description", "user_id"]  # Replace with appropriate names
 
 # Remove empty rows
 df.dropna(inplace=True)
@@ -16,7 +16,7 @@ df.drop_duplicates(inplace=True)
 
 # Drop duplicates based on the first four columns
 # Replace 'column1', 'column2', 'column3', 'column4' with the actual column names
-df.drop_duplicates(subset=['MC', 'Date', 'downtime_start', 'downtime_finish'], keep='first', inplace=True)
+df.drop_duplicates(subset=['mc', 'date', 'downtime_start', 'downtime_finish'], keep='first', inplace=True)
 
 # Drop useless columns
 df.drop(["remove_one", "remove_two", "remove_three"], axis=1, inplace=True)
@@ -41,6 +41,11 @@ df['downtime_total_minutes'] = df['downtime_total'].dt.total_seconds() / 60  # f
 # Drop the original downtime_total column if no longer needed
 df.drop(columns=['downtime_total'], inplace=True)
 
+# Convert the Date column to datetime format with dayfirst=True
+df['date'] = pd.to_datetime(df['date'], dayfirst=True)
+
+# Create a new column 'Day' with the day name
+df['day'] = df['date'].dt.day_name()
 
 # Set Pandas to show all columns
 pd.set_option('display.max_columns', None)
