@@ -11,8 +11,11 @@ import database_utils  # Import the utility module
 flask_app = Flask(__name__)
 flask_app.secret_key = "supersecretkey"
 
-# Get the Heroku database URL
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://localhost/downtime_data")
+
+# Get the DATABASE_URL from the environment and replace 'postgres://' with 'postgresql://'
+DATABASE_URL = os.getenv("DATABASE_URL").replace("postgres://", "postgresql://", 1)
+
+
 engine = create_engine(DATABASE_URL)
 
 def create_dash_app(flask_app):

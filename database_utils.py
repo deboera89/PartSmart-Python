@@ -2,6 +2,7 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 import psycopg2
 from psycopg2 import sql
+from urllib.parse import urlparse
 import logging
 
 # Set up logging
@@ -60,11 +61,29 @@ def initialize_database():
 def verify_connection():
     """Test database connection and return status"""
     try:
+        # Get the DATABASE_URL environment variable
+        DATABASE_URL = os.getenv("DATABASE_URL")
+        if DATABASE_URL is None:
+            raise Exception("DATABASE_URL environment variable not set")
+
+        # Replace 'postgres://' with 'postgresql://' if needed
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+        # Parse the DATABASE_URL
+        result = urlparse(DATABASE_URL)
+        dbname = result.path[1:]  # Remove the leading '/' from the path
+        user = result.username
+        password = result.password
+        host = result.hostname
+        port = result.port
+
+        # Connect to the database
         conn = psycopg2.connect(
-            dbname=db_name,
-            user=db_user,
-            password=db_password,
-            host=db_host
+            dbname=dbname,
+            user=user,
+            password=password,
+            host=host,
+            port=port
         )
         conn.close()
         logger.info("Database connection test successful")
@@ -75,24 +94,55 @@ def verify_connection():
 
 
 def get_current_count():
-    """Get current count of rows in the database"""
+    """Get current count of rows in the 'downtime' table"""
     try:
+        # Get the DATABASE_URL environment variable
+        DATABASE_URL = os.getenv("DATABASE_URL")
+        if DATABASE_URL is None:
+            raise Exception("DATABASE_URL environment variable not set")
+
+        # Replace 'postgres://' with 'postgresql://' if needed
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+        # Parse the DATABASE_URL
+        result = urlparse(DATABASE_URL)
+        dbname = result.path[1:]  # Remove the leading '/' from the path
+        user = result.username
+        password = result.password
+        host = result.hostname
+        port = result.port
+
+        # Connect to the database
         conn = psycopg2.connect(
-            dbname=db_name,
-            user=db_user,
-            password=db_password,
-            host=db_host
+            dbname=dbname,
+            user=user,
+            password=password,
+            host=host,
+            port=port
         )
+
+        # Execute the query to get the row count
         cursor = conn.cursor()
         cursor.execute("SELECT COUNT(*) FROM downtime")
         count = cursor.fetchone()[0]
+
+        # Close the cursor and connection
         cursor.close()
         conn.close()
+
         return count
     except Exception as e:
         logger.error(f"Error getting current count: {e}")
         return None
 
+
+import os
+import psycopg2
+import pandas as pd
+from urllib.parse import urlparse
+import logging
+
+logger = logging.getLogger(__name__)
 
 def setup_and_insert_data(file):
     """Enhanced version with proper transaction management"""
@@ -106,15 +156,14 @@ def setup_and_insert_data(file):
         df = pd.read_csv(file)
         logger.info(f"CSV file read successfully. Shape: {df.shape}")
 
-        # Data cleaning (keeping the same cleaning steps as before)
+        # Data cleaning
         df.columns = ["mc", "date", "downtime_start", "downtime_finish", "downtime_total",
                       "remove_one", "remove_two", "remove_three", "downtime_reason",
                       "machine_state", "shift_code", "part_number", "part_description", "user_id"]
 
         df.dropna(inplace=True)
         df.drop_duplicates(inplace=True)
-        df.drop_duplicates(subset=['mc', 'date', 'downtime_start', 'downtime_finish'],
-                           keep='first', inplace=True)
+        df.drop_duplicates(subset=['mc', 'date', 'downtime_start', 'downtime_finish'], keep='first', inplace=True)
         df.drop(["remove_one", "remove_two", "remove_three"], axis=1, inplace=True)
 
         # Convert date/time columns
@@ -133,12 +182,22 @@ def setup_and_insert_data(file):
         df.drop(columns=['downtime_total'], inplace=True)
         df['day'] = df['date'].dt.day_name()
 
-        # Use psycopg2 for better transaction control
+        # Parse DATABASE_URL for Heroku compatibility
+        DATABASE_URL = os.getenv("DATABASE_URL").replace("postgres://", "postgresql://", 1)
+        result = urlparse(DATABASE_URL)
+        dbname = result.path[1:]  # Remove the leading '/' from the path
+        user = result.username
+        password = result.password
+        host = result.hostname
+        port = result.port
+
+        # Use psycopg2 for transaction control
         conn = psycopg2.connect(
-            dbname=db_name,
-            user=db_user,
-            password=db_password,
-            host=db_host
+            dbname=dbname,
+            user=user,
+            password=password,
+            host=host,
+            port=port
         )
         cursor = conn.cursor()
 
@@ -193,6 +252,7 @@ def setup_and_insert_data(file):
     except Exception as e:
         logger.error(f"An error occurred: {e}")
         raise
+
 
 
 if __name__ == "__main__":
