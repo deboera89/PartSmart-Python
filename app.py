@@ -234,4 +234,6 @@ def upload_file():
 
 
 if __name__ == "__main__":
-    flask_app.run(debug=True)
+    # Get the port from the environment variable or default to 5000 for local development
+    port = int(os.getenv("PORT", 5000))
+    flask_app.run(host="0.0.0.0", port=port, debug=True)
