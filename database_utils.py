@@ -25,6 +25,9 @@ def initialize_database():
     if not DATABASE_URL:
         raise Exception("DATABASE_URL environment variable not set.")
 
+    # Replace postgres:// with postgresql://
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
     # Connect to the database using SQLAlchemy
     engine = create_engine(DATABASE_URL)
 
