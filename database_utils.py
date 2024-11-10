@@ -14,6 +14,45 @@ db_user = "postgres"
 db_password = "1T1I1m1e"
 db_host = "localhost"
 
+# database_utils.py
+import os
+from sqlalchemy import create_engine, text
+
+
+def initialize_database():
+    # Get the Heroku database URL from the environment variable
+    DATABASE_URL = os.getenv("DATABASE_URL")
+    if not DATABASE_URL:
+        raise Exception("DATABASE_URL environment variable not set.")
+
+    # Connect to the database using SQLAlchemy
+    engine = create_engine(DATABASE_URL)
+
+    # Define SQL for creating the 'downtime' table
+    create_table_sql = """
+    CREATE TABLE IF NOT EXISTS downtime (
+        mc TEXT,
+        date DATE,
+        downtime_start TIMESTAMP,
+        downtime_finish TIMESTAMP,
+        downtime_total_minutes DOUBLE PRECISION,
+        downtime_reason TEXT,
+        machine_state TEXT,
+        shift_code TEXT,
+        part_number TEXT,
+        part_description TEXT,
+        user_id TEXT,
+        day TEXT,
+        UNIQUE (mc, date, downtime_start, downtime_finish)
+    );
+    """
+
+    # Execute the table creation SQL
+    with engine.connect() as connection:
+        connection.execute(text(create_table_sql))
+        print("Database tables created successfully.")
+
+
 
 def verify_connection():
     """Test database connection and return status"""
