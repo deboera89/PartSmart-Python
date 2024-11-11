@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 from dash import Dash, dcc, html, Input, Output, State, callback_context, no_update
 import pandas as pd
 from sqlalchemy import create_engine, text
+from config import DATABASE_URL
 import os
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -12,8 +13,6 @@ flask_app = Flask(__name__)
 flask_app.secret_key = "supersecretkey"
 
 
-# Get the DATABASE_URL from the environment and replace 'postgres://' with 'postgresql://'
-DATABASE_URL = os.getenv("DATABASE_URL").replace("postgres://", "postgresql://", 1)
 
 
 engine = create_engine(DATABASE_URL)
