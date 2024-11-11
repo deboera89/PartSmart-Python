@@ -4,6 +4,8 @@ import psycopg2
 from psycopg2 import sql
 from urllib.parse import urlparse
 import logging
+from dotenv import load_dotenv
+load_dotenv()
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
